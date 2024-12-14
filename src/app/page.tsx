@@ -5,15 +5,22 @@ import { ClipboardForm } from "@/components/clipboard-form";
 import { ClipboardList } from "@/components/clipboard-list";
 import { SearchBar } from "@/components/search-bar";
 import { useClipboardStore } from "../hooks/use-clipboard-store";
+import { Loader2 } from "lucide-react";
 
 export default function Home() {
-  const { entries, addEntry, updateEntry, deleteEntry } = useClipboardStore();
+  const { entries, addEntry, updateEntry, deleteEntry, isReady } =
+    useClipboardStore();
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredEntries = entries.filter((entry) =>
     entry.text.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
+  if (!isReady)
+    return (
+      <div className="w-full h-screen flex">
+        <Loader2 size={64} className="animate-spin mx-auto my-auto" />
+      </div>
+    );
   return (
     <main className="container mx-auto px-4 py-8 max-w-6xl h-screen flex flex-col">
       <h1 className="text-3xl font-bold mb-6">Permanent Clipboard</h1>
