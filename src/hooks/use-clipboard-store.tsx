@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import CryptoJS from "crypto-js";
 
@@ -31,7 +31,7 @@ export function useClipboardStore() {
     return CryptoJS.lib.WordArray.random(256 / 8).toString();
   };
 
-  const getUserKey = () => {
+  const getUserKey = useCallback(() => {
     const storedKey = localStorage.getItem("clipboardUserKey");
     if (storedKey) {
       return storedKey;
@@ -40,10 +40,6 @@ export function useClipboardStore() {
       localStorage.setItem("clipboardUserKey", newUserKey);
       return newUserKey;
     }
-  };
-
-  useEffect(() => {
-    setUserKey(getUserKey());
   }, []);
 
   const encrypt = (text: string) => {
@@ -51,18 +47,22 @@ export function useClipboardStore() {
     return CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
   };
 
-  const decrypt = (cipherText: string) => {
-    if (!userKey) return cipherText;
-    try {
-      const bytes = CryptoJS.AES.decrypt(cipherText, ENCRYPTION_KEY);
-      return bytes.toString(CryptoJS.enc.Utf8);
-    } catch (error) {
-      console.log("Error decrypting text", error);
-      return "*** Error decrypting text ***";
-    }
-  };
+  const decrypt = useCallback(
+    (cipherText: string) => {
+      if (!userKey) return cipherText;
+      try {
+        const bytes = CryptoJS.AES.decrypt(cipherText, ENCRYPTION_KEY);
+        return bytes.toString(CryptoJS.enc.Utf8);
+      } catch (error) {
+        console.log("Error decrypting text", error);
+        return "*** Error decrypting text ***";
+      }
+    },
+    [userKey]
+  );
 
   useEffect(() => {
+    setUserKey(getUserKey());
     const storedEntries = localStorage.getItem("clipboardEntries");
     const defaultsAdded = localStorage.getItem("clipboardDefaultsAdded");
     if (storedEntries) {
@@ -79,7 +79,7 @@ export function useClipboardStore() {
       localStorage.setItem("clipboardEntries", JSON.stringify(DEFAULT_ENTRIES));
       localStorage.setItem("clipboardDefaultsAdded", "true");
     }
-  }, []);
+  }, [getUserKey, decrypt]);
 
   const saveEntries = (newEntries: ClipboardEntry[]) => {
     if (!userKey) {
