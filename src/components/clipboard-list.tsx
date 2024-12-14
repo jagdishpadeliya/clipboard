@@ -5,8 +5,9 @@ import { ClipboardEntry } from "@/hooks/use-clipboard-store";
 import { ClipboardForm } from "./clipboard-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Copy, Pencil, Trash } from "lucide-react";
+import { Copy, Pencil, Star, Trash } from "lucide-react";
 import { toast } from "sonner";
+import { correctUserEntry } from "@/lib/actions/open-ai.actions";
 
 interface ClipboardListProps {
   entries: ClipboardEntry[];
@@ -31,6 +32,17 @@ export function ClipboardList({
     setEditingId(null);
   };
 
+  const aiGenerate = async (text: string, id: string) => {
+    try {
+      toast.info("Generating AI response...");
+      const response = await correctUserEntry(text);
+      handleUpdate(id, response ?? "");
+      toast.success("AI response generated successfully");
+    } catch (error) {
+      toast.error("Failed to generate AI response");
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4">
       {entries.map((entry) => (
@@ -50,6 +62,14 @@ export function ClipboardList({
               {new Date(entry.createdAt).toLocaleString()}
             </div>
             <div className="space-x-1">
+              <Button
+                variant={"outline"}
+                size={"icon"}
+                className={"h-8 w-8"}
+                onClick={() => aiGenerate(entry.text, entry.id)}
+              >
+                <Star className={"h-4 w-4"} />
+              </Button>
               <Button
                 variant="outline"
                 size="icon"
